@@ -2783,16 +2783,19 @@ function! s:GrepComplete(A, L, P) abort
   endif
 endfunction
 
-call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Ggrep :execute s:Grep('grep',<bang>0,<q-args>)")
-call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Glgrep :execute s:Grep('lgrep',<bang>0,<q-args>)")
-call s:command("-bar -bang -nargs=* -range=-1 -complete=customlist,s:GrepComplete Glog :call s:Log('grep',<bang>0,<line1>,<count>,<q-args>)")
-call s:command("-bar -bang -nargs=* -range=-1 -complete=customlist,s:GrepComplete Gllog :call s:Log('lgrep',<bang>0,<line1>,<count>,<q-args>)")
+call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Ggrep :execute s:Grep('grep',<bang>0,<q-args>),0")
+call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Glgrep :execute s:Grep('lgrep',<bang>0,<q-args>),0")
+call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Gcdgrep :execute s:Grep('grep',<bang>0,<q-args>),1")
+call s:command("-bar -bang -nargs=* -range=-1 -complete=customlist,s:GrepComplete Glog :call s:Log('grep',<bang>0,<line1>,<count>,<q-args>),0")
+call s:command("-bar -bang -nargs=* -range=-1 -complete=customlist,s:GrepComplete Gllog :call s:Log('lgrep',<bang>0,<line1>,<count>,<q-args>),0")
 
-function! s:Grep(cmd,bang,arg) abort
+function! s:Grep(cmd,bang,arg, stay_in_current_dir) abort
   let grepprg = &grepprg
   let grepformat = &grepformat
   try
-    let cdback = s:Cd(s:Tree())
+    if stay_in_current_dir:
+      let cdback = s:Cd(s:Tree())
+    endif
     let &grepprg = s:UserCommand() . ' --no-pager grep -n --no-color'
     let &grepformat = '%f:%l:%c:%m,%f:%l:%m,%m %f match%ts,%f'
     if fugitive#GitVersion(2, 19)
@@ -2824,7 +2827,9 @@ function! s:Grep(cmd,bang,arg) abort
   finally
     let &grepprg = grepprg
     let &grepformat = grepformat
-    execute cdback
+    if exists("cdback")
+      execute cdback
+    endif
   endtry
 endfunction
 
